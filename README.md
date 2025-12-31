@@ -35,20 +35,6 @@ The goal of this project is to automate the complete software delivery lifecycle
 
 ---
 
-## 📂 Project Structure
-
-```
-ansible-jenkins-pipeline/
-│
-├── Dockerfile
-├── deployment.yaml
-├── inventory.ini
-├── Jenkinsfile
-├── app/
-│   └── (application source code)
-└── README.md
-```
-
 ---
 
 ## ⚙️ Prerequisites
@@ -110,21 +96,42 @@ Ansible is used to automate:
 ```yaml
 - name: Build & deploy docker container
   hosts: dockerserver
-  become: true
-  remote_user: ubuntu
+  gather_facts: false
+  remote_user: root
+  #become: true
 
   tasks:
-    - name: Build Docker image
+#      shell: scp -r /var/lib/jenkins/workspace/ansible-jenkins-pipeline/ root@54.167.19.201:~/projects/
+
+    - name: stopping the container
+      docker_container:
+        name: mico-con
+        image: mico:latest
+        state: stopped
+
+    - name: removing the container
+      docker_container:
+        name: mico-con
+        image: mico:latest
+        state: absent
+
+    - name: removing docker image
       docker_image:
-        name: myapp:latest
+        name: mico:latest
+        state: absent
+
+    - name: Building docker image
+      docker_image:
+        name: mico:latest
+        source: build
         build:
-          path: /home/ubuntu/projects
+          path: ~/projects/
         state: present
 
-    - name: Run Docker container
+    - name: Create the container
       docker_container:
-        name: myapp-container
-        image: myapp:latest
+        name: mico-con
+        image: mico:latest
         ports:
           - "80:80"
         state: started
@@ -172,12 +179,6 @@ Ansible is used to automate:
 ## 🤝 Contribution
 
 Feel free to fork this repository, improve the pipeline, or add new features. Pull requests are welcome!
-
----
-
-## 📜 License
-
-This project is open-source and available for educational purposes.
 
 ---
 
